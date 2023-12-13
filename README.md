@@ -1,4 +1,5 @@
 # AgCan_Barley
 Scripts for processing GbS markers, analyzing phenotypic data, and performing genomic prediction.
 
-Note that some marker processing steps were conducted in TASSEL and are described in Materials & Methods.
+Processing GbS markers:
+Note that some marker processing steps were conducted in TASSEL and are described in Materials & Methods. Some processing steps were conducted locally (R and TASSEL steps), whereas others were conducted on Compute Canada (paths for Compute Canada scripts and "format_snps_and_phenodata_04042023_edited.R" are not relative to this directory).
