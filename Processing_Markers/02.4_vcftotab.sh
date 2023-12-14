@@ -4,7 +4,7 @@
 #SBATCH --mail-user=asmith75@uoguelph.ca
 #SBATCH --mail-type=ALL
 
-# Objective: Convert vcf to 012 format.
+# Objective: Filter vcf to pruned snp set and convert vcf to 012 format.
 
 module load vcftools/0.1.16
 
