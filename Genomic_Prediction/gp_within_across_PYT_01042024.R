@@ -62,7 +62,7 @@ assign_sets_within <- function(cv_data, num_folds = 5, num_reps = 10, set_seed){
 
 # This function creates unique training sets of the appropriate size for each fold of each iteration given a dataset and the validation sets output from assign_sets_within.
 # Inputs: training set data, validation set output from assign_sets_within, seed (integer of format "[int]L")
-# Outputs: a dataframe with __
+# Outputs: a dataframe with observation id, index for selected lines in training data, fold id, iteration id. 
 # Note that results will be the same if seed and dataset size are the same (should change seed between datasets).
 assign_sets_across <- function(ts_data, v_sets, set_seed){
   # determine the sizes that the training sets should be
@@ -89,7 +89,7 @@ assign_sets_across <- function(ts_data, v_sets, set_seed){
 
 # This function performs genomic prediction within datasets
 # Inputs: data, validation set output from assign_sets_within, marker matrix, name of phenotype variable
-# Outputs: a dataframe with
+# Outputs: a dataframe with observation id, entry name, predicted value, observed value, fold id, iteration id
 gp_within <- function(cv_data, v_sets, markers, phenotype_var){
   # parameters
   num_iter = length(unique(v_sets$iter))
@@ -129,7 +129,7 @@ gp_within <- function(cv_data, v_sets, markers, phenotype_var){
 
 # This function performs genomic prediction across datasets
 # Inputs: training set data, validation set data, training set markers, validation set markers, training set output from assign_sets_across, validation set output from assign_sets_within, name of phenotype variable.
-# Outputs: a dataframe with
+# Outputs: a dataframe with observation id, entry name, predicted value, observed value, fold id, iteration id
 gp_across <- function(ts_data, vs_data, ts_markers, vs_markers, t_sets, v_sets, phenotype_var){
   # parameters:
   # number of folds and iterations
