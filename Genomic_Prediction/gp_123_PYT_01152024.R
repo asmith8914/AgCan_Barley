@@ -45,8 +45,8 @@ assign_vs <- function(cv_data, vs_cohort, num_folds = 5, num_reps = 10, set_seed
 }
 
 # Function to randomly assign training sets from specified cohorts
-# Inputs:
-# Outputs:
+# Inputs: data, training set cohort(s) (as c(character in quotes)), validation sets (output of assign_vs), and seed (integer of format "[int]L").
+# Outputs: dataframe with observation ids, ids of training set lines, fold ids, and iteration ids.
 assign_ts_cohorts <- function(data, ts_cohorts, v_sets, set_seed){
   # number of folds and iterations
   num_iter = length(unique(v_sets$iter))
@@ -76,8 +76,8 @@ assign_ts_cohorts <- function(data, ts_cohorts, v_sets, set_seed){
 }
 
 # Function to apply genomic prediction with specified training and validation sets
-# Inputs:
-# Outputs:
+# Inputs: data, markers, training sets (output of assign_ts_cohorts), validation sets (output of assign_vs), and phenotype variable (in quotes).
+# Outputs: a tibble with entry name, predicted value, observed value, and fold and iteration ids.
 gp_ts_vs <- function(data, markers, t_sets, v_sets, phenotype_var){
   # number of folds and iterations
   num_iter = length(unique(v_sets$iter))

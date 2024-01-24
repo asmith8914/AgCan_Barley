@@ -1,7 +1,7 @@
-## Genomic Prediction Trained with 1, 2, or 3 Cohorts (Not Size Controlled)
+## Genomic Prediction Trained with 1 or 2 Cohorts (Not Size Controlled)
 # 01/16/2024
 
-# Objectives: Compare predictions using 1, 2, or 3 cohorts in training set to predict the same validation sets (not size controlled).
+# Objectives: Compare predictions using 1 or 2 cohorts in training set to predict the same validation sets (not size controlled).
 
 library(tidyverse)
 library(rrBLUP)
@@ -44,6 +44,9 @@ assign_vs <- function(cv_data, vs_cohort, num_folds = 5, num_reps = 10, set_seed
     return(as_tibble(folds_table))}, .progress = TRUE)
 }
 
+# Function to perform genomic prediction with specified validation sets and training set composed of specified cohort(s)
+# Inputs: data, markers, training set cohort(s) (as c(character in quotes)), validation sets (output of assign_vs), and phenotype variable (in quotes).
+# Outputs: a tibble with entry name, cohort, predicted value, observed value, and fold and iteration ids.
 gp_set_ts_vs <- function(data, markers, ts_cohorts, v_sets, phenotype_var){
   # number of folds and iterations
   num_iter = length(unique(v_sets$iter))
