@@ -1,7 +1,9 @@
 ## Response to Selection with Phenotypic and Genomic Predictions
-# 01/12/2024
+# 03/13/2024
 
-# Objectives: Fit a model on entry adjusted means with a trial effect, to get emmeans of genotypes in trials (control for differences in means between trial environments). Then calculate the response to selection. 
+# Objectives: Same as before: fit a model on entry adjusted means with a trial effect, to get emmeans of genotypes in trials (control for differences in means between trial environments). Then calculate the response to selection. 
+# This time, use all advanced trial lines selected using phenotype and genomic prediction. Also try comparing all lines, including the preliminary trial lines selected using genomic prediction which were not in advanced trials.
+# These results will go in appendix and discussion.
 
 library(tidyverse)
 library(emmeans)
@@ -24,7 +26,7 @@ markers_2018 <- as.matrix(data_2018[, -c(1:23)])
 markers_2019 <- as.matrix(data_2019[, -c(1:23)])
 markers_2020 <- as.matrix(data_2020[, -c(1:23)])
 
-# Remove extra columns from cohort data (unrep PYTs and AYT traits, markers)
+# Remove marker columns from cohort data
 data_2018 <- data_2018 %>%
   select(colnames(gp_data)[1:23])
 data_2019 <- data_2019 %>%
@@ -172,31 +174,20 @@ lapply(c(1:length(data_vec)), function(x){
          envir = .GlobalEnv)
 })
 
-# Objective is to get rankings that occur for both GP and PS. Then obtain means of entries with those rankings for GP and PS.
-# Get rankings that are common to both GP and PS.
-lapply(c(1:length(data_vec)), function(x){
-  assign(paste0("comrank_", data_vec[x]),
-         unname(get(paste0("ayt_", data_vec[x]))[["ps_rank"]][get(paste0("ayt_", data_vec[x]))[["ps_rank"]] %in% get(paste0("ayt_", data_vec[x]))[["gp_rank"]]]),
-         envir = .GlobalEnv)
-})
-
-# Filter out the rankings above 30.
-lapply(c(1:length(data_vec)), function(x){
-  assign(paste0("rankfilt_", data_vec[x]),
-         get(paste0("comrank_", data_vec[x]))[get(paste0("comrank_", data_vec[x])) < 31],
-         envir = .GlobalEnv)
-})
-
-# 1E) Extract line names for PS and GS
+# Extract the names of lines ranked 30th or higher for phenotype or GEBV
 lapply(c(1:length(data_vec)), function(x){
   assign(paste0("ps_names_", data_vec[x]),
-         get(data_vec[x])[get(data_vec[x])[["ps_rank"]] %in% get(paste0("comrank_", data_vec[x])), 1],
+         get(paste0("ayt_", data_vec[x])) %>%
+           filter(ps_rank < 31) %>%
+           pull(NAME),
          envir = .GlobalEnv)
 })
 
 lapply(c(1:length(data_vec)), function(x){
   assign(paste0("gp_names_", data_vec[x]),
-         get(data_vec[x])[get(data_vec[x])[["gp_rank"]] %in% get(paste0("comrank_", data_vec[x])), 1],
+         get(paste0("ayt_", data_vec[x])) %>%
+           filter(gp_rank < 31) %>%
+           pull(NAME),
          envir = .GlobalEnv)
 })
 
@@ -239,7 +230,7 @@ gs_results <- left_join(pyt_means, ayt_means_gs) %>%
 results <- full_join(ps_results, gs_results) %>%
   mutate(method = factor(method, levels = c("PS", "GS")))
 
-write.csv(results, "Data/gp/resptosel_res_trialmodel.csv", row.names = FALSE)
+write.csv(results, "Data/gp/resptosel_res_allselaytlines.csv", row.names = FALSE)
 
 # 4B) Plots
 fig_rts_y <- ggplot(data = results[results$trait == "yield",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Yield (kg/ha)") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
@@ -266,20 +257,96 @@ plot_grid(fig_rts_y + theme(legend.position = "none"),
           fig_rts_tw + theme(legend.position = "none"),
           fig_rts_hd + theme(legend.position = "none"),
           fig_legend, labels = c("A", "B", "C", "D", "E"))
-ggsave("Figures/gp/resptosel_wtrialmodel.pdf", height = 8.5, width = 11)
-ggsave("Figures/gp/resptosel_wtrialmodel.svg", height = 8.5, width = 11)
+ggsave("Figures/gp/resptosel_wtrialmodel_allselaytlines.pdf", height = 8.5, width = 11)
+ggsave("Figures/gp/resptosel_wtrialmodel_allselaytlines.svg", height = 8.5, width = 11)
 
 # Save the rankings and number of rankings used for each cohort
-sink("Data/gp/resptosel_ranks_trialmodel.txt")
-print("Ranks and n for each cohort (2018, 2019, 2020) for response to selection.")
-print(rankfilt_data_2018)
-print(rankfilt_data_2019)
-print(rankfilt_data_2020)
-print(length(rankfilt_data_2018))
-print(length(rankfilt_data_2019))
-print(length(rankfilt_data_2020))
-print("Ranks for appendix table")
-paste(noquote(sort(rankfilt_data_2018)), collapse = ", ")
-paste(noquote(sort(rankfilt_data_2019)), collapse = ", ")
-paste(noquote(sort(rankfilt_data_2020)), collapse = ", ")
+sink("Data/gp/resptosel_nlines_trialmodel_allselaytlines.txt")
+print("Phenotypic n for each cohort (2018, 2019, 2020) for response to selection.")
+print(length(ps_names_data_2018))
+print(length(ps_names_data_2019))
+print(length(ps_names_data_2020))
+print("Genomic n for each cohort (2018, 2019, 2020) for response to selection.")
+print(length(gp_names_data_2018))
+print(length(gp_names_data_2019))
+print(length(gp_names_data_2020))
 sink()
+
+# Now, want to calculate using emmeans of top 30 lines for both methods, regardless of if they are in the AYT.
+# No figure, just for discussion.
+# Get names of top 30 lines
+lapply(c(1:length(data_vec)), function(x){
+  assign(paste0("gp30_", data_vec[x]),
+         get(data_vec[x]) %>%
+           filter(gp_rank < 31) %>%
+           pull(NAME),
+         envir = .GlobalEnv)
+})
+
+lapply(c(1:length(data_vec)), function(x){
+  assign(paste0("ps30_", data_vec[x]),
+         get(data_vec[x]) %>%
+           filter(ps_rank < 31) %>%
+           pull(NAME),
+         envir = .GlobalEnv)
+})
+
+# 2B) Calculate "AYT" means for PS and GS (use the trial model emmeans)
+ayt_means_ps2 <- as.data.frame(do.call(rbind, lapply(c(1:5), function(x){
+  do.call(rbind, lapply(c(1:3), function(z){
+    data.frame(cohort = gsub("data_", "", data_vec[z]),
+               trait = trait_vec[x],
+               ayt_mean = mean(get(paste0("nochecks_", trait_vec[x]))[get(paste0("nochecks_", trait_vec[x]))[["NAME"]] %in% get(paste0("ps30_", data_vec[z])),][["emmean"]]))
+  }))
+})))
+
+ayt_means_gs2 <- as.data.frame(do.call(rbind, lapply(c(1:5), function(x){
+  do.call(rbind, lapply(c(1:3), function(z){
+    data.frame(cohort = gsub("data_", "", data_vec[z]),
+               trait = trait_vec[x],
+               ayt_mean = mean(get(paste0("nochecks_", trait_vec[x]))[get(paste0("nochecks_", trait_vec[x]))[["NAME"]] %in% get(paste0("gp30_", data_vec[z])),][["emmean"]]))
+  }))
+})))
+
+# 4A) Calculate change in means between PYT and AYT
+ps_results2 <- left_join(pyt_means, ayt_means_ps2) %>%
+  mutate(change_mean = ayt_mean - pyt_mean,
+         method = "PS")
+
+gs_results2 <- left_join(pyt_means, ayt_means_gs2) %>%
+  mutate(change_mean = ayt_mean - pyt_mean,
+         method = "GS")
+
+# Merge together
+results2 <- full_join(ps_results2, gs_results2) %>%
+  mutate(method = factor(method, levels = c("PS", "GS")))
+
+write.csv(results2, "Data/gp/resptosel_res_allsellines.csv", row.names = FALSE)
+
+# 4B) Plots only for comparison
+fig_rts_y2 <- ggplot(data = results2[results2$trait == "yield",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Yield (kg/ha)") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
+fig_rts_y2
+
+fig_rts_ph2 <- ggplot(data = results2[results2$trait == "height",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Plant Height (cm)") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
+fig_rts_ph2
+
+fig_rts_sw2 <- ggplot(data = results2[results2$trait == "sw",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Seed Weight (g)") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
+fig_rts_sw2
+
+fig_rts_tw2 <- ggplot(data = results2[results2$trait == "tw",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Test Weight (kg/hL)") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
+fig_rts_tw2
+
+fig_rts_hd2 <- ggplot(data = results2[results2$trait == "hd",], mapping = aes(x = cohort, y = change_mean, fill = method)) + geom_bar(stat = "identity", position = "dodge") + xlab("Cohort") + ylab("Change in Mean Days to Heading") + labs(fill = "Selection Method") + theme_light() + scale_fill_manual(values = c("#9BBB59", "#4BACC6"))
+fig_rts_hd2
+
+# Make composite plot
+fig_legend2 <- get_legend(fig_rts_y2)
+
+plot_grid(fig_rts_y2 + theme(legend.position = "none"),
+          fig_rts_ph2 + theme(legend.position = "none"),
+          fig_rts_sw2 + theme(legend.position = "none"),
+          fig_rts_tw2 + theme(legend.position = "none"),
+          fig_rts_hd2 + theme(legend.position = "none"),
+          fig_legend2, labels = c("A", "B", "C", "D", "E"))
+ggsave("Figures/gp/resptosel_wtrialmodel_allsellines.pdf", height = 8.5, width = 11)
+ggsave("Figures/gp/resptosel_wtrialmodel_allsellines.svg", height = 8.5, width = 11)

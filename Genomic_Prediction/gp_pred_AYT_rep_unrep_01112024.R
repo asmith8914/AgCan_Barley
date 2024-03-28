@@ -130,6 +130,8 @@ cor_df <- full_join(orig_trait_df, mean_unrep_df) %>%
   pivot_longer(cols = !c(trait, cohort, rep_level), names_to = "cor_type", values_to = "cor") %>%
   mutate(cor_rep_type = factor(paste0(gsub("_cor", "", cor_type), "_", rep_level), levels = c("pheno_unrep", "gp_unrep", "pheno_rep", "gp_rep")))
 
+write.csv(cor_df, "Data/gp/gp_pa_AYT_rep_unrep.csv", row.names = FALSE)
+
 # 3) Make figures ----
 figure_yield <- ggplot(data = cor_df %>% filter(trait == "yield"), aes(x = cohort, y = cor, fill = cor_rep_type)) + geom_bar(stat = "identity", position = "dodge") + labs(fill = "PYT Value", caption = "Yield (kg/ha)") + ylab("Correlation (r) with AYT Entry Adjusted Means") + xlab("Cohort") + scale_fill_manual(values = c("#F79646", "#4BACC6", "#C0504D", "#1F497D"), labels = c(paste0("Unreplicated","\n", "Phenotypic"), paste0("Unreplicated", "\n", "Genomic"), paste0("Replicated","\n", "Phenotypic"), paste0("Replicated", "\n", "Genomic"))) + theme_light()
 figure_yield

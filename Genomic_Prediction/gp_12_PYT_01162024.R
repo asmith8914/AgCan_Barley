@@ -171,6 +171,8 @@ results3 <- results2 %>%
   mutate(ts = factor(case_when(ts_type == "1" ~ "One Cohort", ts_type == "2" ~ "One Cohort (Other)", ts_type == "3" ~ "Two Cohorts"), levels = c("One Cohort", "One Cohort (Other)", "Two Cohorts"))) %>%
   select(Cohort, trait, ts, overall_pa, stdev)
 
+write.csv(results3, "Data/gp/gp_pa_12_pyt.csv", row.names = FALSE)
+
 # Make figures
 lapply(c(1:length(trait_vec)), function(x){
   assign(paste0("figure_", trait_vec[x]),

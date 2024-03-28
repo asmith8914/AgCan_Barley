@@ -221,6 +221,8 @@ res_2020 <- do.call(rbind, lapply(c(1:length(ts_2020_vec)), function(x){
 results <- rbind(res_2018, res_2019, res_2020) %>%
   mutate(ts = factor(case_when(.$ts == "2pyt" ~ "Two Cohorts", .$ts == "3pyt" ~ "Three Cohorts", .$ts == "pyt_1" ~ "One Cohort", .$ts == "pyt_2" ~ "One Cohort (Other)"), levels = c("One Cohort", "One Cohort (Other)", "Two Cohorts", "Three Cohorts")))
 
+write.csv(results, "Data/gp/gp_pa_123_pyt.csv", row.names = FALSE)
+
 # Make figures
 lapply(c(1:length(trait_vec)), function(x){
   assign(paste0("figure_", trait_vec[x]),
