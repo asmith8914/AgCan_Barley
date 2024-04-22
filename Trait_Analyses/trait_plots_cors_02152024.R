@@ -138,3 +138,41 @@ print(pyt_cors)
 print("Correlations of AYT traits with other AYT traits")
 print(ayt_cors)
 sink()
+
+# 04/22/2024 ----
+# Obtain p-values for correlations
+# Same trait between PYT and AYT
+pyt_ayt_cors_p <- lapply(c(1:5), function(x){
+  cor.test(x = get("means_pyts_ayts")[[paste0("mean_PYT_", trait_vec[x])]], y = get("means_pyts_ayts")[[paste0("mean_AYT_", trait_vec[x])]], method = "pearson", alternative = "two.sided")
+})
+
+# Within PYT
+pyt_names <- paste0("mean_PYT_", trait_vec)
+pyt_comb <- t(combn(pyt_names, 2))
+colnames(pyt_comb) <- c("var1", "var2")
+pyt_comb <- as_tibble(pyt_comb)
+
+pyt_cors_p <- pyt_comb %>%
+  mutate(cors = map2(var1, var2, ~cor.test(gp_data[[.x]], gp_data[[.y]], alternative = "two.sided", method = "pearson")))
+
+# Within AYT
+ayt_names <- paste0("mean_AYT_", trait_vec)
+ayt_comb <- t(combn(ayt_names, 2))
+colnames(ayt_comb) <- c("var1", "var2")
+ayt_comb <- as_tibble(ayt_comb)
+
+ayt_cors_p <- ayt_comb %>%
+  mutate(cors = map2(var1, var2, ~cor.test(means_pyts_ayts[[.x]], means_pyts_ayts[[.y]], alternative = "two.sided", method = "pearson")))
+
+# Save results
+sink("Data/pheno/trait_cor_emmeans_pval.txt")
+print("Trait correlations using entry adjusted means")
+print("Correlations of PYT traits with the same trait in AYTs")
+print(pyt_ayt_cors_p)
+print("Correlations of PYT traits with other PYT traits")
+print(pyt_comb)
+print(pyt_cors_p %>% pluck(., 'cors'))
+print("Correlations of AYT traits with other AYT traits")
+print(ayt_comb)
+print(ayt_cors_p %>% pluck(., 'cors'))
+sink()
